@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Battle Tables de Multiplication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 2px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .player-zone {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        .player-1 {
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+        }
+
+        .player-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .divider {
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .player-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .player-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 30px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .question-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .question {
+            font-size: 64px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 40px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.15);
+            padding: 20px 40px;
+            border-radius: 20px;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .answer-btn {
+            font-size: 36px;
+            font-weight: bold;
+            padding: 30px;
+            border: none;
+            border-radius: 15px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .answer-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .answer-btn.correct {
+            background: #48bb78;
+            color: white;
+            animation: pulse 0.3s;
+        }
+
+        .answer-btn.wrong {
+            background: #f56565;
+            color: white;
+            animation: shake 0.3s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .victory-overlay.show {
+            display: flex;
+        }
+
+        .victory-message {
+            text-align: center;
+            color: white;
+        }
+
+        .victory-message h1 {
+            font-size: 72px;
+            margin-bottom: 30px;
+            animation: bounce 1s infinite;
+        }
+
+        .victory-message p {
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+
+        .restart-btn {
+            font-size: 28px;
+            padding: 20px 60px;
+            border: none;
+            border-radius: 15px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.3);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @media (max-width: 768px) {
+            .question { font-size: 48px; }
+            .answer-btn { font-size: 28px; padding: 25px; }
+            .score { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Joueur 1 -->
+        <div class="player-zone player-1" id="player1">
+            <div class="player-header">
+                <div class="player-name">Joueur 1</div>
+                <div class="score" id="score1">0 / 10</div>
+            </div>
+            <div class="question-area">
+                <div class="question" id="question1">7 × 8 ?</div>
+                <div class="answers-grid" id="answers1"></div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Joueur 2 -->
+        <div class="player-zone player-2" id="player2">
+            <div class="player-header">
+                <div class="player-name">Joueur 2</div>
+                <div class="score" id="score2">0 / 10</div>
+            </div>
+            <div class="question-area">
+                <div class="question" id="question2">6 × 9 ?</div>
+                <div class="answers-grid" id="answers2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran de victoire -->
+    <div class="victory-overlay" id="victoryOverlay">
+        <div class="victory-message">
+            <h1 id="winnerText">🏆 Joueur 1 Gagne ! 🏆</h1>
+            <p id="finalScores">10 - 7</p>
+            <button class="restart-btn" onclick="restartGame()">Rejouer</button>
+        </div>
+    </div>
+
+    <script>
+        const WINNING_SCORE = 10;
+        const MIN_TABLE = 2;
+        const MAX_TABLE = 10;
+        const NUM_ANSWERS = 6;
+
+        let game = {
+            player1: { score: 0, currentQuestion: null, locked: false },
+            player2: { score: 0, currentQuestion: null, locked: false }
+        };
+
+        // Génère TOUTES les réponses possibles des tables (résultats réels uniquement)
+        function getAllTableResults() {
+            const results = new Set();
+            for (let i = MIN_TABLE; i <= MAX_TABLE; i++) {
+                for (let j = MIN_TABLE; j <= MAX_TABLE; j++) {
+                    results.add(i * j);
+                }
+            }
+            return Array.from(results).sort((a, b) => a - b);
+        }
+
+        const ALL_POSSIBLE_ANSWERS = getAllTableResults();
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateQuestion() {
+            const a = randomInt(MIN_TABLE, MAX_TABLE);
+            const b = randomInt(MIN_TABLE, MAX_TABLE);
+            return { a, b, answer: a * b };
+        }
+
+        function generateAnswers(correctAnswer) {
+            // Trouve l'index de la bonne réponse dans la liste triée
+            const correctIndex = ALL_POSSIBLE_ANSWERS.indexOf(correctAnswer);
+            
+            // Prend les 6 valeurs les plus proches (avant et après)
+            const candidates = [];
+            
+            // Stratégie : prendre 2-3 valeurs avant, la bonne, et 2-3 après
+            const beforeCount = Math.min(3, correctIndex); // Max 3 avant, ou moins si début de liste
+            const afterCount = Math.min(3, ALL_POSSIBLE_ANSWERS.length - correctIndex - 1);
+            
+            // Ajuste pour avoir exactement 6 réponses
+            let startIndex = Math.max(0, correctIndex - beforeCount);
+            let endIndex = Math.min(ALL_POSSIBLE_ANSWERS.length, correctIndex + afterCount + 1);
+            
+            // Si on n'a pas assez, élargir
+            while (endIndex - startIndex < NUM_ANSWERS && 
+                   (startIndex > 0 || endIndex < ALL_POSSIBLE_ANSWERS.length)) {
+                if (startIndex > 0) startIndex--;
+                if (endIndex - startIndex < NUM_ANSWERS && endIndex < ALL_POSSIBLE_ANSWERS.length) {
+                    endIndex++;
+                }
+            }
+            
+            // Extraire les réponses
+            const answers = ALL_POSSIBLE_ANSWERS.slice(startIndex, endIndex);
+            
+            // Prendre exactement NUM_ANSWERS (au cas où)
+            const finalAnswers = answers.slice(0, NUM_ANSWERS);
+            
+            // S'assurer que la bonne réponse est incluse
+            if (!finalAnswers.includes(correctAnswer)) {
+                finalAnswers[0] = correctAnswer;
+            }
+            
+            // Mélange les réponses pour ne pas avoir l'ordre croissant
+            return finalAnswers.sort(() => Math.random() - 0.5);
+        }
+
+        function updateScore(playerNum) {
+            const score = game[`player${playerNum}`].score;
+            document.getElementById(`score${playerNum}`).textContent = `${score} / ${WINNING_SCORE}`;
+        }
+
+        function checkVictory() {
+            if (game.player1.score >= WINNING_SCORE) {
+                showVictory(1);
+                return true;
+            }
+            if (game.player2.score >= WINNING_SCORE) {
+                showVictory(2);
+                return true;
+            }
+            return false;
+        }
+
+        function showVictory(winnerNum) {
+            const overlay = document.getElementById('victoryOverlay');
+            const winnerText = document.getElementById('winnerText');
+            const finalScores = document.getElementById('finalScores');
+
+            winnerText.textContent = `🏆 Joueur ${winnerNum} Gagne ! 🏆`;
+            finalScores.textContent = `${game.player1.score} - ${game.player2.score}`;
+            overlay.classList.add('show');
+        }
+
+        function restartGame() {
+            game.player1.score = 0;
+            game.player2.score = 0;
+            game.player1.locked = false;
+            game.player2.locked = false;
+            
+            updateScore(1);
+            updateScore(2);
+            
+            document.getElementById('victoryOverlay').classList.remove('show');
+            
+            loadQuestion(1);
+            loadQuestion(2);
+        }
+
+        function loadQuestion(playerNum) {
+            const player = game[`player${playerNum}`];
+            if (player.locked) return;
+
+            const question = generateQuestion();
+            player.currentQuestion = question;
+
+            // Affiche la question
+            document.getElementById(`question${playerNum}`).textContent = 
+                `${question.a} × ${question.b} ?`;
+
+            // Génère et affiche les réponses
+            const answers = generateAnswers(question.answer);
+            const answersContainer = document.getElementById(`answers${playerNum}`);
+            answersContainer.innerHTML = '';
+
+            answers.forEach(answer => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = answer;
+                btn.onclick = () => handleAnswer(playerNum, answer);
+                answersContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(playerNum, selectedAnswer) {
+            const player = game[`player${playerNum}`];
+            if (player.locked) return;
+
+            const isCorrect = selectedAnswer === player.currentQuestion.answer;
+            
+            // Feedback visuel
+            const buttons = document.querySelectorAll(`#answers${playerNum} .answer-btn`);
+            buttons.forEach(btn => {
+                if (parseInt(btn.textContent) === selectedAnswer) {
+                    btn.classList.add(isCorrect ? 'correct' : 'wrong');
+                }
+                btn.disabled = true;
+            });
+
+            if (isCorrect) {
+                player.score++;
+                updateScore(playerNum);
+
+                setTimeout(() => {
+                    if (!checkVictory()) {
+                        loadQuestion(playerNum);
+                    } else {
+                        player.locked = true;
+                    }
+                }, 500);
+            } else {
+                // Mauvaise réponse : on attend un peu avant de recharger
+                setTimeout(() => {
+                    buttons.forEach(btn => btn.classList.remove('wrong'));
+                    buttons.forEach(btn => btn.disabled = false);
+                }, 800);
+            }
+        }
+
+        // Initialisation du jeu
+        window.onload = () => {
+            loadQuestion(1);
+            loadQuestion(2);
+        };
+    </script>
+</body>
+</html>

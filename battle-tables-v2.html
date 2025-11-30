@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Battle Tables V2 - Saisie Clavier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 2px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .player-zone {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        .player-1 {
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+        }
+
+        .player-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .divider {
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .player-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .player-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 30px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .question-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .question {
+            font-size: 64px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.15);
+            padding: 20px 40px;
+            border-radius: 20px;
+        }
+
+        .answer-display {
+            font-size: 72px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 40px;
+            background: rgba(255,255,255,0.25);
+            padding: 15px 50px;
+            border-radius: 20px;
+            min-width: 180px;
+            text-align: center;
+            letter-spacing: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .answer-display.correct {
+            background: #48bb78;
+            animation: pulse 0.3s;
+        }
+
+        .answer-display.wrong {
+            background: #f56565;
+            animation: shake 0.3s;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .key-btn {
+            font-size: 42px;
+            font-weight: bold;
+            padding: 25px;
+            border: none;
+            border-radius: 15px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .key-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .victory-overlay.show {
+            display: flex;
+        }
+
+        .victory-message {
+            text-align: center;
+            color: white;
+        }
+
+        .victory-message h1 {
+            font-size: 72px;
+            margin-bottom: 30px;
+            animation: bounce 1s infinite;
+        }
+
+        .victory-message p {
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+
+        .restart-btn {
+            font-size: 28px;
+            padding: 20px 60px;
+            border: none;
+            border-radius: 15px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.3);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @media (max-width: 768px) {
+            .question { font-size: 48px; }
+            .answer-display { font-size: 56px; }
+            .key-btn { font-size: 32px; padding: 20px; }
+            .score { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Joueur 1 -->
+        <div class="player-zone player-1" id="player1">
+            <div class="player-header">
+                <div class="player-name">Joueur 1</div>
+                <div class="score" id="score1">0 / 10</div>
+            </div>
+            <div class="question-area">
+                <div class="question" id="question1">7 × 8 ?</div>
+                <div class="answer-display" id="display1">__</div>
+                <div class="keypad" id="keypad1"></div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Joueur 2 -->
+        <div class="player-zone player-2" id="player2">
+            <div class="player-header">
+                <div class="player-name">Joueur 2</div>
+                <div class="score" id="score2">0 / 10</div>
+            </div>
+            <div class="question-area">
+                <div class="question" id="question2">6 × 9 ?</div>
+                <div class="answer-display" id="display2">__</div>
+                <div class="keypad" id="keypad2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran de victoire -->
+    <div class="victory-overlay" id="victoryOverlay">
+        <div class="victory-message">
+            <h1 id="winnerText">🏆 Joueur 1 Gagne ! 🏆</h1>
+            <p id="finalScores">10 - 7</p>
+            <button class="restart-btn" onclick="restartGame()">Rejouer</button>
+        </div>
+    </div>
+
+    <script>
+        const WINNING_SCORE = 10;
+        const MIN_TABLE = 2;
+        const MAX_TABLE = 10;
+
+        let game = {
+            player1: { score: 0, currentQuestion: null, locked: false, input: '' },
+            player2: { score: 0, currentQuestion: null, locked: false, input: '' }
+        };
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateQuestion() {
+            let a, b, answer;
+            // Exclure les résultats < 10 (tables qui donnent un seul chiffre)
+            do {
+                a = randomInt(MIN_TABLE, MAX_TABLE);
+                b = randomInt(MIN_TABLE, MAX_TABLE);
+                answer = a * b;
+            } while (answer < 10);
+            
+            return { a, b, answer };
+        }
+
+        function updateScore(playerNum) {
+            const score = game[`player${playerNum}`].score;
+            document.getElementById(`score${playerNum}`).textContent = `${score} / ${WINNING_SCORE}`;
+        }
+
+        function checkVictory() {
+            if (game.player1.score >= WINNING_SCORE) {
+                showVictory(1);
+                return true;
+            }
+            if (game.player2.score >= WINNING_SCORE) {
+                showVictory(2);
+                return true;
+            }
+            return false;
+        }
+
+        function showVictory(winnerNum) {
+            const overlay = document.getElementById('victoryOverlay');
+            const winnerText = document.getElementById('winnerText');
+            const finalScores = document.getElementById('finalScores');
+
+            winnerText.textContent = `🏆 Joueur ${winnerNum} Gagne ! 🏆`;
+            finalScores.textContent = `${game.player1.score} - ${game.player2.score}`;
+            overlay.classList.add('show');
+        }
+
+        function restartGame() {
+            game.player1.score = 0;
+            game.player2.score = 0;
+            game.player1.locked = false;
+            game.player2.locked = false;
+            game.player1.input = '';
+            game.player2.input = '';
+            
+            updateScore(1);
+            updateScore(2);
+            
+            document.getElementById('victoryOverlay').classList.remove('show');
+            
+            loadQuestion(1);
+            loadQuestion(2);
+        }
+
+        function createKeypad(playerNum) {
+            const keypad = document.getElementById(`keypad${playerNum}`);
+            keypad.innerHTML = '';
+
+            for (let i = 0; i <= 9; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'key-btn';
+                btn.textContent = i;
+                btn.onclick = () => handleKeyPress(playerNum, i);
+                keypad.appendChild(btn);
+            }
+        }
+
+        function updateDisplay(playerNum) {
+            const player = game[`player${playerNum}`];
+            const display = document.getElementById(`display${playerNum}`);
+            
+            if (player.input.length === 0) {
+                display.textContent = '__';
+            } else if (player.input.length === 1) {
+                display.textContent = player.input + '_';
+            } else {
+                display.textContent = player.input;
+            }
+        }
+
+        function handleKeyPress(playerNum, digit) {
+            const player = game[`player${playerNum}`];
+            if (player.locked) return;
+
+            // Ajoute le chiffre
+            player.input += digit;
+            updateDisplay(playerNum);
+
+            // Si 2 chiffres entrés, vérifie la réponse
+            if (player.input.length === 2) {
+                checkAnswer(playerNum);
+            }
+        }
+
+        function checkAnswer(playerNum) {
+            const player = game[`player${playerNum}`];
+            const userAnswer = parseInt(player.input);
+            const correctAnswer = player.currentQuestion.answer;
+            const display = document.getElementById(`display${playerNum}`);
+
+            if (userAnswer === correctAnswer) {
+                // Bonne réponse
+                display.classList.add('correct');
+                player.score++;
+                updateScore(playerNum);
+
+                setTimeout(() => {
+                    display.classList.remove('correct');
+                    if (!checkVictory()) {
+                        player.input = '';
+                        loadQuestion(playerNum);
+                    } else {
+                        player.locked = true;
+                    }
+                }, 600);
+            } else {
+                // Mauvaise réponse
+                display.classList.add('wrong');
+                
+                setTimeout(() => {
+                    display.classList.remove('wrong');
+                    player.input = '';
+                    updateDisplay(playerNum);
+                }, 800);
+            }
+        }
+
+        function loadQuestion(playerNum) {
+            const player = game[`player${playerNum}`];
+            if (player.locked) return;
+
+            const question = generateQuestion();
+            player.currentQuestion = question;
+            player.input = '';
+
+            // Affiche la question
+            document.getElementById(`question${playerNum}`).textContent = 
+                `${question.a} × ${question.b} ?`;
+
+            // Reset l'affichage
+            updateDisplay(playerNum);
+        }
+
+        // Initialisation du jeu
+        window.onload = () => {
+            createKeypad(1);
+            createKeypad(2);
+            loadQuestion(1);
+            loadQuestion(2);
+        };
+    </script>
+</body>
+</html>
