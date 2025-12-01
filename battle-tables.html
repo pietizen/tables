@@ -16,7 +16,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             height: 100vh;
             overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
         }
 
         .game-container {
@@ -34,11 +34,16 @@
         }
 
         .player-1 {
-            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
         }
 
         .player-2 {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transform: rotate(180deg);
+        }
+        
+        .player-2 * {
+            transform: rotate(180deg);
         }
 
         .divider {
@@ -66,6 +71,26 @@
             padding: 10px 30px;
             border-radius: 15px;
             display: inline-block;
+        }
+
+        .progress-bar {
+            width: 80%;
+            max-width: 300px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            margin: 15px auto 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
 
         .question-area {
@@ -175,7 +200,7 @@
             border: none;
             border-radius: 15px;
             background: white;
-            color: #667eea;
+            color: #ea580c;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(255,255,255,0.3);
@@ -200,6 +225,9 @@
             <div class="player-header">
                 <div class="player-name">Joueur 1</div>
                 <div class="score" id="score1">0 / 10</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress1"></div>
+                </div>
             </div>
             <div class="question-area">
                 <div class="question" id="question1">7 × 8 ?</div>
@@ -214,6 +242,9 @@
             <div class="player-header">
                 <div class="player-name">Joueur 2</div>
                 <div class="score" id="score2">0 / 10</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress2"></div>
+                </div>
             </div>
             <div class="question-area">
                 <div class="question" id="question2">6 × 9 ?</div>
@@ -307,6 +338,10 @@
         function updateScore(playerNum) {
             const score = game[`player${playerNum}`].score;
             document.getElementById(`score${playerNum}`).textContent = `${score} / ${WINNING_SCORE}`;
+            
+            // Mise à jour de la barre de progression
+            const progressPercent = (score / WINNING_SCORE) * 100;
+            document.getElementById(`progress${playerNum}`).style.width = `${progressPercent}%`;
         }
 
         function checkVictory() {
