@@ -287,9 +287,15 @@
         }
 
         function generateQuestion() {
-            const a = randomInt(MIN_TABLE, MAX_TABLE);
-            const b = randomInt(MIN_TABLE, MAX_TABLE);
-            return { a, b, answer: a * b };
+            let a, b, answer;
+            // Exclure les résultats < 15 ET toute la table de 10
+            do {
+                a = randomInt(MIN_TABLE, MAX_TABLE);
+                b = randomInt(MIN_TABLE, MAX_TABLE);
+                answer = a * b;
+            } while (answer < 15 || a === 10 || b === 10);
+            
+            return { a, b, answer };
         }
 
         function generateAnswers(correctAnswer) {
